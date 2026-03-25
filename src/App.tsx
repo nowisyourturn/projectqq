@@ -225,7 +225,7 @@ export default function App() {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
       console.error("Login Error:", err);
-      setError(`Eroare la autentificare: ${err.message || "Te rugăm să încerci din nou."}`);
+      setError(`Eroare la autentificare: ${err.message || "Te rugăm să încerci din nou."} (Domeniu: ${window.location.hostname})`);
     }
   };
 
