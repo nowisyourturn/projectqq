@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required) - The user's unique identifier.
+    //   - name: string (required) - The user's display name.
+    //   - email: string (required, email format) - The user's email address.
+    //   - grade: string (required, '9' or '12') - The user's grade level.
+    //   - subject: string (required) - The current subject of study.
+    //   - interestCategory: string (required) - The category of interest.
+    //   - interestDetail: string (required) - Specific details about the interest.
+    //   - progress: number (required, 0-100) - The user's progress.
+    //   - createdAt: string (optional, ISO 8601) - Creation timestamp.
+    //   - updatedAt: string (optional, ISO 8601) - Update timestamp.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'grade', 'subject', 'interestCategory', 'interestDetail', 'progress']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.grade in ['9', '12'] &&
+             data.subject is string && data.subject.size() > 0 && data.subject.size() < 50 &&
+             data.interestCategory is string && data.interestCategory.size() > 0 && data.interestCategory.size() < 50 &&
+             data.interestDetail is string && data.interestDetail.size() > 0 && data.interestDetail.size() < 256 &&
+             data.progress is number && data.progress >= 0 && data.progress <= 100 &&
+             (!('createdAt' in data) || isValidDateString(data.createdAt)) &&
+             (!('updatedAt' in data) || isValidDateString(data.updatedAt));
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Users can only read their own profile
+      allow read: if isOwner(userId);
+
+      // Users can only create their own profile with valid data
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+
+      // Users can only update their own profile with valid data
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) &&
+                      request.resource.data.uid == resource.data.uid &&
+                      request.resource.data.email == resource.data.email;
+
+      // Users cannot delete their own profile
+      allow delete: if false;
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "The profile information for a user, including their learning preferences and progress.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique identifier for the user (Firebase Auth UID)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "grade": {
+          "type": "string",
+          "enum": ["9", "12"],
+          "description": "The user's grade level."
+        },
+        "subject": {
+          "type": "string",
+          "description": "The subject the user is currently studying."
+        },
+        "interestCategory": {
+          "type": "string",
+          "description": "The category of interest (e.g., Gaming, Movies)."
+        },
+        "interestDetail": {
+          "type": "string",
+          "description": "Specific details about the user's interest."
+        },
+        "progress": {
+          "type": "number",
+          "description": "The user's progress on the Everest climb (0-100)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the user profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the user profile was last updated."
+        }
+      },
+      "required": ["uid", "name", "email", "grade", "subject", "interestCategory", "interestDetail", "progress"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "The collection of user profiles, keyed by their Firebase Auth UID."
+    }
+  }
+}
