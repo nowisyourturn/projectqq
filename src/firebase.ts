@@ -5,6 +5,10 @@ import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where
 // Import the Firebase configuration
 import firebaseConfig from '../firebase-applet-config.json';
 
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('TODO')) {
+  console.warn("Firebase configuration is incomplete. Authentication and database features will not work.");
+}
+
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);

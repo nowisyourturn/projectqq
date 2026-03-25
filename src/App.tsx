@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, 
@@ -41,6 +41,50 @@ import { getTutorResponse, generateTest, evaluateAnswer } from './services/gemin
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from './firebase';
 import { signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+
+class ErrorBoundary extends Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    (this as any).state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if ((this as any).state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
+          <div className="glass p-8 rounded-3xl max-w-md w-full text-center shadow-2xl">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <X size={32} />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Ups! Ceva n-a mers bine.</h2>
+            <p className="text-slate-600 mb-6">
+              Aplicația a întâmpinat o eroare neașteptată. Te rugăm să reîncarci pagina.
+            </p>
+            <div className="p-4 bg-red-50 rounded-xl text-left mb-6 overflow-auto max-h-40">
+              <code className="text-xs text-red-800">{(this as any).state.error?.message}</code>
+            </div>
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+            >
+              Reîncarcă Pagina
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (this as any).props.children;
+  }
+}
 
 const MOCK_LESSONS: Record<Subject, Lesson[]> = {
   romana: [
@@ -1114,8 +1158,20 @@ export default function App() {
     );
   };
 
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-blue-600" size={48} />
+          <p className="text-slate-600 font-medium">Se încarcă expediția...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col">
       <header className="p-6 flex justify-between items-center max-w-7xl mx-auto w-full relative z-50">
         <div 
           onClick={() => setStep('landing')}
@@ -1214,5 +1270,6 @@ export default function App() {
         &copy; 2026 EverestStudy. Creat cu ❤️ pentru elevii din Moldova.
       </footer>
     </div>
+    </ErrorBoundary>
   );
 }

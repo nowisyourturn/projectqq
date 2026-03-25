@@ -1,9 +1,15 @@
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { UserProfile, Subject, TestQuestion } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn("GEMINI_API_KEY is missing. AI features will not work.");
+}
+
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export async function generateTest(userProfile: UserProfile, lessonTitle: string): Promise<TestQuestion[]> {
+  if (!ai) throw new Error("AI service not initialized");
   const prompt = `
     Generează un test de 5 exerciții pentru un elev de clasa a 9-a din Republica Moldova la disciplina ${userProfile.subject}, lecția "${lessonTitle}".
     Personalizează exercițiile folosind interesul elevului (${userProfile.interestCategory}: ${userProfile.interestDetail}).
@@ -44,6 +50,7 @@ export async function evaluateAnswer(
   answer: string,
   imageData?: string // base64
 ) {
+  if (!ai) throw new Error("AI service not initialized");
   const parts: any[] = [
     { text: `Evaluează răspunsul elevului la întrebarea: "${question}".` },
     { text: `Răspuns text: "${answer}"` }
@@ -82,6 +89,7 @@ export async function getTutorResponse(
   userMessage: string,
   chatHistory: { role: 'user' | 'model', parts: { text: string }[] }[] = []
 ) {
+  if (!ai) throw new Error("AI service not initialized");
   const systemInstruction = `
     Ești un Tutore Inteligent personalizat pentru un elev de clasa a 9-a din Republica Moldova care se pregătește pentru examenul de ${userProfile.subject}.
     
