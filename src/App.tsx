@@ -223,9 +223,9 @@ export default function App() {
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login Error:", err);
-      setError("Eroare la autentificare. Te rugăm să încerci din nou.");
+      setError(`Eroare la autentificare: ${err.message || "Te rugăm să încerci din nou."}`);
     }
   };
 
